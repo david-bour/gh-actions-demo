@@ -1,13 +1,10 @@
 const core = require('@actions/core');
 const github = require('@actions/github');
+const matcher = require('matcher');
 
 try {
-    const nameToGreet = core.getInput('who-to-greet');
-    console.log(`Hello ${nameToGreet}!`);
-    const time = (new Date()).toTimeString();
-    core.setOutput('time', time);
-    const payload = JSON.stringify(github.context.payload, undefined, 2)
-    console.log(`This event payload: ${payload}`);
+    const label = core.getInput('target');
+    core.setOutput('results', label);
 } catch (error) {
     core.setFailed(error.message);
 }
