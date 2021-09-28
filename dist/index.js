@@ -20,8 +20,11 @@ const github = __nccwpck_require__(5438);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         const nameToGreet = core.getInput('who-to-greet');
+        console.log(`Hello ${nameToGreet}!`);
         const time = (new Date()).toDateString();
+        core.setOutput("time", time);
         const payload = JSON.stringify(github.context.payload, undefined, 2);
+        console.log(`The event payload: ${payload}`);
     });
 }
 run().catch(error => core.setFailed('Workflow failed ' + error.message));
