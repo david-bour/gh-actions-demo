@@ -8479,7 +8479,7 @@ const github = __nccwpck_require__(5438);
 const matcher = __nccwpck_require__(2239);
 function run() {
     const label = core.getInput('target');
-    const m = matcher(label, 'release-*');
+    const m = matcher.isMatch(label, 'release-*');
     core.setOutput('results', m);
 }
 run();
