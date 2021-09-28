@@ -1,14 +1,10 @@
 const core = require('@actions/core');
 const github = require('@actions/github');
+const matcher = require('matcher');
 
-async function run() {
-    const nameToGreet = core.getInput('who-to-greet');
-    console.log(`Hello ${nameToGreet}!`);
-    const time = (new Date()).toDateString();
-    core.setOutput("time", time);
-    const payload = JSON.stringify(github.context.payload, undefined, 2);
-    console.log(`The event payload: ${payload}`);
+function run() {
+    const label = core.getInput('target');
+    core.setOutput('results', label);
 }
 
-run().catch(error => core.setFailed('Workflow failed ' + error.message));
-
+run();

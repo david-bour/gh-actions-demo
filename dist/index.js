@@ -1,34 +1,6 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 3109:
-/***/ (function(__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) {
-
-"use strict";
-
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-const core = __nccwpck_require__(2186);
-const github = __nccwpck_require__(5438);
-function run() {
-    return __awaiter(this, void 0, void 0, function* () {
-        const nameToGreet = core.getInput('who-to-greet');
-        const time = (new Date()).toDateString();
-        const payload = JSON.stringify(github.context.payload, undefined, 2);
-    });
-}
-run().catch(error => core.setFailed('Workflow failed ' + error.message));
-
-
-/***/ }),
-
 /***/ 7351:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -3913,6 +3885,27 @@ exports.Deprecation = Deprecation;
 
 /***/ }),
 
+/***/ 8691:
+/***/ ((module) => {
+
+"use strict";
+
+
+module.exports = string => {
+	if (typeof string !== 'string') {
+		throw new TypeError('Expected a string');
+	}
+
+	// Escape characters with special meaning either inside or outside character sets.
+	// Use a simple backslash escape when it’s always valid, and a \unnnn escape when the simpler form would be disallowed by Unicode patterns’ stricter grammar.
+	return string
+		.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&')
+		.replace(/-/g, '\\x2d');
+};
+
+
+/***/ }),
+
 /***/ 3287:
 /***/ ((__unused_webpack_module, exports) => {
 
@@ -3955,6 +3948,121 @@ function isPlainObject(o) {
 }
 
 exports.isPlainObject = isPlainObject;
+
+
+/***/ }),
+
+/***/ 2239:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+const escapeStringRegexp = __nccwpck_require__(8691);
+
+const regexpCache = new Map();
+
+function sanitizeArray(input, inputName) {
+	if (!Array.isArray(input)) {
+		switch (typeof input) {
+			case 'string':
+				input = [input];
+				break;
+			case 'undefined':
+				input = [];
+				break;
+			default:
+				throw new TypeError(`Expected '${inputName}' to be a string or an array, but got a type of '${typeof input}'`);
+		}
+	}
+
+	return input.filter(string => {
+		if (typeof string !== 'string') {
+			if (typeof string === 'undefined') {
+				return false;
+			}
+
+			throw new TypeError(`Expected '${inputName}' to be an array of strings, but found a type of '${typeof string}' in the array`);
+		}
+
+		return true;
+	});
+}
+
+function makeRegexp(pattern, options) {
+	options = {
+		caseSensitive: false,
+		...options
+	};
+
+	const cacheKey = pattern + JSON.stringify(options);
+
+	if (regexpCache.has(cacheKey)) {
+		return regexpCache.get(cacheKey);
+	}
+
+	const negated = pattern[0] === '!';
+
+	if (negated) {
+		pattern = pattern.slice(1);
+	}
+
+	pattern = escapeStringRegexp(pattern).replace(/\\\*/g, '[\\s\\S]*');
+
+	const regexp = new RegExp(`^${pattern}$`, options.caseSensitive ? '' : 'i');
+	regexp.negated = negated;
+	regexpCache.set(cacheKey, regexp);
+
+	return regexp;
+}
+
+module.exports = (inputs, patterns, options) => {
+	inputs = sanitizeArray(inputs, 'inputs');
+	patterns = sanitizeArray(patterns, 'patterns');
+
+	if (patterns.length === 0) {
+		return [];
+	}
+
+	const isFirstPatternNegated = patterns[0][0] === '!';
+
+	patterns = patterns.map(pattern => makeRegexp(pattern, options));
+
+	const result = [];
+
+	for (const input of inputs) {
+		// If first pattern is negated we include everything to match user expectation.
+		let matches = isFirstPatternNegated;
+
+		for (const pattern of patterns) {
+			if (pattern.test(input)) {
+				matches = !pattern.negated;
+			}
+		}
+
+		if (matches) {
+			result.push(input);
+		}
+	}
+
+	return result;
+};
+
+module.exports.isMatch = (inputs, patterns, options) => {
+	inputs = sanitizeArray(inputs, 'inputs');
+	patterns = sanitizeArray(patterns, 'patterns');
+
+	if (patterns.length === 0) {
+		return false;
+	}
+
+	return inputs.some(input => {
+		return patterns.every(pattern => {
+			const regexp = makeRegexp(pattern, options);
+			const matches = regexp.test(input);
+			return regexp.negated ? !matches : matches;
+		});
+	});
+};
 
 
 /***/ }),
@@ -8361,12 +8469,22 @@ module.exports = require("zlib");
 /******/ 	if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = __dirname + "/";
 /******/ 	
 /************************************************************************/
-/******/ 	
-/******/ 	// startup
-/******/ 	// Load entry module and return exports
-/******/ 	// This entry module is referenced by other modules so it can't be inlined
-/******/ 	var __webpack_exports__ = __nccwpck_require__(3109);
-/******/ 	module.exports = __webpack_exports__;
-/******/ 	
+var __webpack_exports__ = {};
+// This entry need to be wrapped in an IIFE because it need to be in strict mode.
+(() => {
+"use strict";
+
+const core = __nccwpck_require__(2186);
+const github = __nccwpck_require__(5438);
+const matcher = __nccwpck_require__(2239);
+function run() {
+    const label = core.getInput('target');
+    core.setOutput('results', label);
+}
+run();
+
+})();
+
+module.exports = __webpack_exports__;
 /******/ })()
 ;
