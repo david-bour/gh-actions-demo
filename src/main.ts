@@ -4,7 +4,8 @@ const matcher = require('matcher');
 
 function run() {
     const label = core.getInput('target');
-    core.setOutput('results', label);
+    const m = matcher(label, 'release-*')
+    core.setOutput('results', m);
 }
 
 run();
