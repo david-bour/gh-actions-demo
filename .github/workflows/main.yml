@@ -2,10 +2,7 @@ name: 'Label Validator'
 on:
   pull_request:
     types: [labeled, unlabeled, opened, reopened, synchronize]
-  push:
-    branches:
-      - main
-      - 'releases/*'
+
 jobs:
   label-czar:
     runs-on: ubuntu-latest
