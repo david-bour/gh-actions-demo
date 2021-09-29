@@ -1,5 +1,11 @@
-on: [push]
-
+name: 'Label Validator'
+on:
+  pull_request:
+    types: [labeled, unlabeled, opened, reopened, synchronize]
+  push:
+    branches:
+      - main
+      - 'releases/*'
 jobs:
   label-czar:
     runs-on: ubuntu-latest
@@ -10,10 +16,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Validate the label
-        uses: ./ # Uses an action in the root directory
-        id: hello
+        uses: david-bour/nalc@v1.0
         with:
-          target: 'release-2.0'
-      # Use the output from the `hello` step
-      - name: Get the result
-        run: echo "The result is ${{ steps.hello.outputs.results }}"
+          expectedLabels: 'release*'
